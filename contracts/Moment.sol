@@ -26,12 +26,12 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
     uint256 public publicStartTime;
     uint256 public publicPrice;
 
-    // white list mint config
-    bytes32 public whiteListMerkleRoot;
-    uint256 public whiteListMintedAmount;
-    uint256 public whiteListStartTime;
-    uint256 public whiteListEndTime;
-    uint256 public whiteListPrice;
+    // allow list mint config
+    bytes32 public allowListMerkleRoot;
+    uint256 public allowListMintedAmount;
+    uint256 public allowListStartTime;
+    uint256 public allowListEndTime;
+    uint256 public allowListPrice;
 
     constructor(
         string memory baseURI_,
@@ -39,15 +39,15 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         uint256 publicAvailableAmount_,
         uint256 publicStartTime_,
         uint256 publicPrice_,
-        bytes32 whiteListMerkleRoot_,
-        uint256 whiteListStartTime_,
-        uint256 whiteListEndTime_,
-        uint256 whiteListPrice_
+        bytes32 allowListMerkleRoot_,
+        uint256 allowListStartTime_,
+        uint256 allowListEndTime_,
+        uint256 allowListPrice_
     ) ERC721A("The Moment3!", "MOMENT") {
         require(
             reservedAmount_ <= collectionSize &&
                 publicAvailableAmount_ <= collectionSize - reservedAmount_ &&
-                whiteListStartTime_ <= whiteListEndTime_,
+                allowListStartTime_ <= allowListEndTime_,
             "invalid"
         );
         baseURI = baseURI_;
@@ -55,10 +55,10 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         publicAvailableAmount = publicAvailableAmount_;
         publicStartTime = publicStartTime_;
         publicPrice = publicPrice_;
-        whiteListMerkleRoot = whiteListMerkleRoot_;
-        whiteListStartTime = whiteListStartTime_;
-        whiteListEndTime = whiteListEndTime_;
-        whiteListPrice = whiteListPrice_;
+        allowListMerkleRoot = allowListMerkleRoot_;
+        allowListStartTime = allowListStartTime_;
+        allowListEndTime = allowListEndTime_;
+        allowListPrice = allowListPrice_;
     }
 
     function setBaseURI(string calldata baseURI_) public onlyOwner {
@@ -71,17 +71,17 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         uint256 publicAvailableAmount_,
         uint256 publicStartTime_,
         uint256 publicPrice_,
-        bytes32 whiteListMerkleRoot_,
-        uint256 whiteListStartTime_,
-        uint256 whiteListEndTime_,
-        uint256 whiteListPrice_
+        bytes32 allowListMerkleRoot_,
+        uint256 allowListStartTime_,
+        uint256 allowListEndTime_,
+        uint256 allowListPrice_
     ) public onlyOwner {
         require(
             reservedAmount_ <= reservedAmount &&
                 reservedAmount_ >= reservedMintedAmount &&
                 publicAvailableAmount_ >= publicAvailableAmount &&
                 publicAvailableAmount_ <= collectionSize - reservedAmount_ &&
-                whiteListStartTime_ <= whiteListEndTime_,
+                allowListStartTime_ <= allowListEndTime_,
             "invalid"
         );
         perAddressMaxMintAmount = perAddressMaxMintAmount_;
@@ -89,34 +89,34 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         publicAvailableAmount = publicAvailableAmount_;
         publicStartTime = publicStartTime_;
         publicPrice = publicPrice_;
-        whiteListMerkleRoot = whiteListMerkleRoot_;
-        whiteListStartTime = whiteListStartTime_;
-        whiteListEndTime = whiteListEndTime_;
-        whiteListPrice = whiteListPrice_;
+        allowListMerkleRoot = allowListMerkleRoot_;
+        allowListStartTime = allowListStartTime_;
+        allowListEndTime = allowListEndTime_;
+        allowListPrice = allowListPrice_;
     }
 
     function mint(
         uint256 amount,
-        uint256 whiteListTotalAmount,
-        bytes32[] calldata whiteListMerkleProof
+        uint256 allowListTotalAmount,
+        bytes32[] calldata allowListMerkleProof
     ) public payable callerIsUser nonReentrant {
         require(
             publicMintedAmount + amount <= publicAvailableAmount &&
                 _numberMinted(msg.sender) + amount <= perAddressMaxMintAmount,
             "not enough amount"
         );
-        uint256 whiteListRemainAmount = 0;
+        uint256 allowListRemainAmount = 0;
         if (
-            block.timestamp >= whiteListStartTime &&
-            block.timestamp <= whiteListEndTime
+            block.timestamp >= allowListStartTime &&
+            block.timestamp <= allowListEndTime
         ) {
-            whiteListRemainAmount = getWhiteListRemainAmount(
+            allowListRemainAmount = getWhiteListRemainAmount(
                 msg.sender,
-                whiteListTotalAmount,
-                whiteListMerkleProof
+                allowListTotalAmount,
+                allowListMerkleProof
             );
         }
-        if (whiteListRemainAmount == 0) {
+        if (allowListRemainAmount == 0) {
             require(
                 block.timestamp >= publicStartTime,
                 "public mint not started"
@@ -124,17 +124,17 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
             _publicMint(amount);
             _refundIfOver(amount * publicPrice);
         } else {
-            if (amount <= whiteListRemainAmount) {
-                _whiteListMint(amount);
-                _refundIfOver(amount * whiteListPrice);
+            if (amount <= allowListRemainAmount) {
+                _allowListMint(amount);
+                _refundIfOver(amount * allowListPrice);
             } else {
-                uint256 publicAmount = amount - whiteListRemainAmount;
+                uint256 publicAmount = amount - allowListRemainAmount;
                 uint256 publicTotalPrice = publicAmount * publicPrice;
-                uint256 whiteListTotalPrice = whiteListRemainAmount *
-                    whiteListPrice;
+                uint256 allowListTotalPrice = allowListRemainAmount *
+                    allowListPrice;
                 _publicMint(publicAmount);
-                _whiteListMint(whiteListRemainAmount);
-                _refundIfOver(publicTotalPrice + whiteListTotalPrice);
+                _allowListMint(allowListRemainAmount);
+                _refundIfOver(publicTotalPrice + allowListTotalPrice);
             }
         }
     }
@@ -150,7 +150,7 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
             totalAmount >= mintedAmount &&
                 MerkleProof.verify(
                     merkleProof,
-                    whiteListMerkleRoot,
+                    allowListMerkleRoot,
                     keccak256(abi.encodePacked(user, ":", totalAmount))
                 ),
             "verify fail"
@@ -163,9 +163,9 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         _safeMint(msg.sender, amount);
     }
 
-    function _whiteListMint(uint256 amount) private {
+    function _allowListMint(uint256 amount) private {
         publicMintedAmount += amount;
-        whiteListMintedAmount += amount;
+        allowListMintedAmount += amount;
         _setAux(msg.sender, _getAux(msg.sender) + uint64(amount));
         _safeMint(msg.sender, amount);
     }
