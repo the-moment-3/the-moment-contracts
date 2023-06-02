@@ -13,8 +13,8 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
     string public baseURI;
 
     // collection info
-    uint256 public constant collectionSize = 9960;
-    uint256 public perAddressMaxMintAmount = 10;
+    uint256 public constant collectionSize = 5555;
+    uint256 public perAddressMaxMintAmount = 5;
 
     // for marketing etc.
     uint256 public reservedAmount;
@@ -52,7 +52,7 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         uint256 whiteListStartTime_,
         uint256 whiteListEndTime_,
         uint256 whiteListPrice_
-    ) ERC721A("996fubao", "FUBAO") {
+    ) ERC721A("The Moment3!", "MOMENT") {
         require(
             reservedAmount_ <= collectionSize &&
                 publicAvailableAmount_ <= collectionSize - reservedAmount_ &&
@@ -105,10 +105,10 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         whiteListPrice = whiteListPrice_;
     }
 
-    function setRefundConfig(uint256 refundPeriod_, address refundAddress_)
-        public
-        onlyOwner
-    {
+    function setRefundConfig(
+        uint256 refundPeriod_,
+        address refundAddress_
+    ) public onlyOwner {
         refundPeriod = refundPeriod_;
         refundAddress = refundAddress_;
     }
@@ -214,11 +214,9 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         }
     }
 
-    function refund(uint256[] calldata tokenIds)
-        public
-        callerIsUser
-        nonReentrant
-    {
+    function refund(
+        uint256[] calldata tokenIds
+    ) public callerIsUser nonReentrant {
         uint256 refundValue;
         for (uint256 i = 0; i < tokenIds.length; i++) {
             uint256 tokenId = tokenIds[i];
