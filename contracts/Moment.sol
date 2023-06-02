@@ -33,14 +33,6 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
     uint256 public whiteListEndTime;
     uint256 public whiteListPrice;
 
-    // refund config
-    mapping(uint256 => uint256) public refundPriceMap;
-    mapping(uint256 => uint256) public refundEndTimeMap;
-    uint256 public refundPeriod = 7 days;
-    uint256 public refundLastEndTime;
-    uint256 public refundedAmount;
-    address public refundAddress;
-
     constructor(
         string memory baseURI_,
         uint256 reservedAmount_,
@@ -67,7 +59,6 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         whiteListStartTime = whiteListStartTime_;
         whiteListEndTime = whiteListEndTime_;
         whiteListPrice = whiteListPrice_;
-        refundAddress = msg.sender;
     }
 
     function setBaseURI(string calldata baseURI_) public onlyOwner {
@@ -102,14 +93,6 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         whiteListStartTime = whiteListStartTime_;
         whiteListEndTime = whiteListEndTime_;
         whiteListPrice = whiteListPrice_;
-    }
-
-    function setRefundConfig(
-        uint256 refundPeriod_,
-        address refundAddress_
-    ) public onlyOwner {
-        refundPeriod = refundPeriod_;
-        refundAddress = refundAddress_;
     }
 
     function mint(
@@ -178,7 +161,6 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
 
     function _publicMint(uint256 amount) private {
         publicMintedAmount += amount;
-        _setMintData(amount, publicPrice);
         _safeMint(msg.sender, amount);
         emit PublicMint(msg.sender, amount, publicPrice);
     }
@@ -187,42 +169,8 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         publicMintedAmount += amount;
         whiteListMintedAmount += amount;
         _setAux(msg.sender, _getAux(msg.sender) + uint64(amount));
-        _setMintData(amount, whiteListPrice);
         _safeMint(msg.sender, amount);
         emit WhiteListMint(msg.sender, amount, whiteListPrice);
-    }
-
-    function _setMintData(uint256 amount, uint256 price) private {
-        uint256 index = _currentIndex;
-        uint256 endIndex = index + amount;
-        uint256 endTime = block.timestamp + refundPeriod;
-        do {
-            refundPriceMap[index] = price;
-            refundEndTimeMap[index] = endTime;
-            index++;
-        } while (index != endIndex);
-        if (endTime > refundLastEndTime) {
-            refundLastEndTime = endTime;
-        }
-    }
-
-    function refund(
-        uint256[] calldata tokenIds
-    ) public callerIsUser nonReentrant {
-        uint256 refundValue;
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 tokenId = tokenIds[i];
-            require(msg.sender == ownerOf(tokenId), "not owner");
-            require(
-                block.timestamp <= refundEndTimeMap[tokenId],
-                "refund expired"
-            );
-            transferFrom(msg.sender, refundAddress, tokenId);
-            refundValue += refundPriceMap[tokenId];
-        }
-        refundedAmount += tokenIds.length;
-        payable(msg.sender).transfer(refundValue);
-        emit Refund(msg.sender, refundValue, tokenIds);
     }
 
     function airdrop(address user, uint256 amount) public onlyOwner {
@@ -302,7 +250,6 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
     }
 
     function withdraw() public onlyOwner nonReentrant {
-        require(block.timestamp >= refundLastEndTime, "refund not end");
         (bool success, ) = msg.sender.call{value: address(this).balance}("");
         require(success, "fail");
     }
@@ -325,6 +272,5 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
     event PublicMint(address user, uint256 amount, uint256 price);
     event WhiteListMint(address user, uint256 amount, uint256 price);
     event Mint(address user, uint256 amount);
-    event Refund(address user, uint256 value, uint256[] tokenIds);
     event Burn(address user, uint256[] tokenIds);
 }
