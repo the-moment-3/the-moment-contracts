@@ -137,7 +137,6 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
                 _refundIfOver(publicTotalPrice + whiteListTotalPrice);
             }
         }
-        emit Mint(msg.sender, amount);
     }
 
     function getWhiteListRemainAmount(
@@ -162,7 +161,6 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
     function _publicMint(uint256 amount) private {
         publicMintedAmount += amount;
         _safeMint(msg.sender, amount);
-        emit PublicMint(msg.sender, amount, publicPrice);
     }
 
     function _whiteListMint(uint256 amount) private {
@@ -170,7 +168,6 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         whiteListMintedAmount += amount;
         _setAux(msg.sender, _getAux(msg.sender) + uint64(amount));
         _safeMint(msg.sender, amount);
-        emit WhiteListMint(msg.sender, amount, whiteListPrice);
     }
 
     function airdrop(address user, uint256 amount) public onlyOwner {
@@ -207,7 +204,6 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
             require(msg.sender == ownerOf(tokenId), "not owner");
             _burn(tokenId);
         }
-        emit Burn(msg.sender, tokenIds);
     }
 
     // pausable
@@ -268,9 +264,4 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
     function _startTokenId() internal pure override returns (uint256) {
         return 1;
     }
-
-    event PublicMint(address user, uint256 amount, uint256 price);
-    event WhiteListMint(address user, uint256 amount, uint256 price);
-    event Mint(address user, uint256 amount);
-    event Burn(address user, uint256[] tokenIds);
 }
