@@ -19,7 +19,6 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
     // for marketing etc.
     uint256 public reservedAmount;
     uint256 public reservedMintedAmount;
-    mapping(uint256 => string) public mintChannelMap;
 
     // public mint config
     uint256 public publicAvailableAmount;
@@ -116,15 +115,13 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
     function mint(
         uint256 amount,
         uint256 whiteListTotalAmount,
-        bytes32[] calldata whiteListMerkleProof,
-        string calldata channel
+        bytes32[] calldata whiteListMerkleProof
     ) public payable callerIsUser nonReentrant {
         require(
             publicMintedAmount + amount <= publicAvailableAmount &&
                 _numberMinted(msg.sender) + amount <= perAddressMaxMintAmount,
             "not enough amount"
         );
-        require(bytes(channel).length <= 20, "channel too long");
         uint256 whiteListRemainAmount = 0;
         if (
             block.timestamp >= whiteListStartTime &&
@@ -141,23 +138,23 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
                 block.timestamp >= publicStartTime,
                 "public mint not started"
             );
-            _publicMint(amount, channel);
+            _publicMint(amount);
             _refundIfOver(amount * publicPrice);
         } else {
             if (amount <= whiteListRemainAmount) {
-                _whiteListMint(amount, channel);
+                _whiteListMint(amount);
                 _refundIfOver(amount * whiteListPrice);
             } else {
                 uint256 publicAmount = amount - whiteListRemainAmount;
                 uint256 publicTotalPrice = publicAmount * publicPrice;
                 uint256 whiteListTotalPrice = whiteListRemainAmount *
                     whiteListPrice;
-                _publicMint(publicAmount, channel);
-                _whiteListMint(whiteListRemainAmount, channel);
+                _publicMint(publicAmount);
+                _whiteListMint(whiteListRemainAmount);
                 _refundIfOver(publicTotalPrice + whiteListTotalPrice);
             }
         }
-        emit Mint(msg.sender, amount, channel);
+        emit Mint(msg.sender, amount);
     }
 
     function getWhiteListRemainAmount(
@@ -179,34 +176,29 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         return totalAmount - mintedAmount;
     }
 
-    function _publicMint(uint256 amount, string calldata channel) private {
+    function _publicMint(uint256 amount) private {
         publicMintedAmount += amount;
-        _setMintData(amount, publicPrice, channel);
+        _setMintData(amount, publicPrice);
         _safeMint(msg.sender, amount);
-        emit PublicMint(msg.sender, amount, publicPrice, channel);
+        emit PublicMint(msg.sender, amount, publicPrice);
     }
 
-    function _whiteListMint(uint256 amount, string calldata channel) private {
+    function _whiteListMint(uint256 amount) private {
         publicMintedAmount += amount;
         whiteListMintedAmount += amount;
         _setAux(msg.sender, _getAux(msg.sender) + uint64(amount));
-        _setMintData(amount, whiteListPrice, channel);
+        _setMintData(amount, whiteListPrice);
         _safeMint(msg.sender, amount);
-        emit WhiteListMint(msg.sender, amount, whiteListPrice, channel);
+        emit WhiteListMint(msg.sender, amount, whiteListPrice);
     }
 
-    function _setMintData(
-        uint256 amount,
-        uint256 price,
-        string calldata channel
-    ) private {
+    function _setMintData(uint256 amount, uint256 price) private {
         uint256 index = _currentIndex;
         uint256 endIndex = index + amount;
         uint256 endTime = block.timestamp + refundPeriod;
         do {
             refundPriceMap[index] = price;
             refundEndTimeMap[index] = endTime;
-            mintChannelMap[index] = channel;
             index++;
         } while (index != endIndex);
         if (endTime > refundLastEndTime) {
@@ -330,19 +322,9 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
         return 1;
     }
 
-    event PublicMint(
-        address user,
-        uint256 amount,
-        uint256 price,
-        string channel
-    );
-    event WhiteListMint(
-        address user,
-        uint256 amount,
-        uint256 price,
-        string channel
-    );
-    event Mint(address user, uint256 amount, string channel);
+    event PublicMint(address user, uint256 amount, uint256 price);
+    event WhiteListMint(address user, uint256 amount, uint256 price);
+    event Mint(address user, uint256 amount);
     event Refund(address user, uint256 value, uint256[] tokenIds);
     event Burn(address user, uint256[] tokenIds);
 }
