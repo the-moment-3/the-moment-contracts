@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
-contract Fubao is ERC721A, Ownable, ReentrancyGuard {
+contract Moment is ERC721A, Ownable, ReentrancyGuard {
     // metadata
     string public baseURI;
 
@@ -41,8 +41,11 @@ contract Fubao is ERC721A, Ownable, ReentrancyGuard {
         uint256 allowListEndTime_,
         uint256 allowListPrice_
     ) ERC721A("The Moment3!", "MOMENT") {
-        require(reservedAmount_ <= collectionSize, "invalid");
-        require(allowListStartTime_ <= allowListEndTime_, "invalid");
+        require(
+            reservedAmount_ <= collectionSize &&
+                allowListStartTime_ <= allowListEndTime_,
+            "invalid"
+        );
         baseURI = baseURI_;
         reservedAmount = reservedAmount_;
         publicStartTime = publicStartTime_;
@@ -57,7 +60,7 @@ contract Fubao is ERC721A, Ownable, ReentrancyGuard {
         baseURI = baseURI_;
     }
 
-    function setMintConfig(
+    function setConfig(
         uint256 perAddressMaxMintAmount_,
         uint256 reservedAmount_,
         uint256 publicStartTime_,
@@ -98,8 +101,7 @@ contract Fubao is ERC721A, Ownable, ReentrancyGuard {
             block.timestamp >= allowListStartTime &&
             block.timestamp <= allowListEndTime
         ) {
-            allowListRemainAmount = getWhiteListRemainAmount(
-                msg.sender,
+            allowListRemainAmount = getAllowListRemainAmount(
                 allowListTotalAmount,
                 allowListMerkleProof
             );
@@ -112,7 +114,8 @@ contract Fubao is ERC721A, Ownable, ReentrancyGuard {
             _publicMint(amount);
             _refundIfOver(amount * publicPrice);
         } else {
-            if (amount <= allowListRemainAmount) {
+            require(amount >= allowListRemainAmount, "must be used up at once");
+            if (amount == allowListRemainAmount) {
                 _allowListMint(amount);
                 _refundIfOver(amount * allowListPrice);
             } else {
@@ -127,23 +130,23 @@ contract Fubao is ERC721A, Ownable, ReentrancyGuard {
         }
     }
 
-    function getWhiteListRemainAmount(
-        address user,
-        uint256 totalAmount,
-        bytes32[] calldata merkleProof
+    function getAllowListRemainAmount(
+        uint256 allowListTotalAmount,
+        bytes32[] calldata allowListMerkleProof
     ) public view returns (uint256) {
-        if (totalAmount == 0) return 0;
-        uint256 mintedAmount = _getAux(user);
+        if (allowListTotalAmount == 0) return 0;
         require(
-            totalAmount >= mintedAmount &&
+            allowListTotalAmount >= _getAux(msg.sender) &&
                 MerkleProof.verify(
-                    merkleProof,
+                    allowListMerkleProof,
                     allowListMerkleRoot,
-                    keccak256(abi.encodePacked(user, ":", totalAmount))
+                    keccak256(
+                        abi.encodePacked(msg.sender, ":", allowListTotalAmount)
+                    )
                 ),
             "verify fail"
         );
-        return totalAmount - mintedAmount;
+        return allowListTotalAmount - _getAux(msg.sender);
     }
 
     function _publicMint(uint256 amount) private {
