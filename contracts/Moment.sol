@@ -134,16 +134,15 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
         uint256 allowListTotalAmount,
         bytes32[] calldata allowListMerkleProof
     ) public view returns (uint256) {
-        if (allowListTotalAmount == 0) return 0;
+        if (allowListTotalAmount <= _getAux(msg.sender)) return 0;
         require(
-            allowListTotalAmount >= _getAux(msg.sender) &&
-                MerkleProof.verify(
-                    allowListMerkleProof,
-                    allowListMerkleRoot,
-                    keccak256(
-                        abi.encodePacked(msg.sender, ":", allowListTotalAmount)
-                    )
-                ),
+            MerkleProof.verify(
+                allowListMerkleProof,
+                allowListMerkleRoot,
+                keccak256(
+                    abi.encodePacked(msg.sender, ":", allowListTotalAmount)
+                )
+            ),
             "verify fail"
         );
         return allowListTotalAmount - _getAux(msg.sender);
