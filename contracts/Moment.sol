@@ -4,11 +4,10 @@ pragma solidity ^0.8.8;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
-contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
+contract Fubao is ERC721A, Ownable, ReentrancyGuard {
     // metadata
     string public baseURI;
 
@@ -193,26 +192,6 @@ contract Fubao is ERC721A, Ownable, Pausable, ReentrancyGuard {
             require(msg.sender == ownerOf(tokenId), "not owner");
             _burn(tokenId);
         }
-    }
-
-    // pausable
-
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
-    }
-
-    function _beforeTokenTransfers(
-        address from,
-        address to,
-        uint256 startTokenId,
-        uint256 amount
-    ) internal override {
-        super._beforeTokenTransfers(from, to, startTokenId, amount);
-        require(!paused(), "paused");
     }
 
     // other
