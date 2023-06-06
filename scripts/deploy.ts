@@ -1,23 +1,33 @@
 import { ethers } from "hardhat";
+import { getTimestamp } from "./utils/contract-time";
+import { allowListMerkleTree } from "./allow-list";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
-
-  const lockedAmount = ethers.utils.parseEther("0.001");
-
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-  await lock.deployed();
-
-  console.log(
-    `Lock with ${ethers.utils.formatEther(lockedAmount)}ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
+  const Moment = await ethers.getContractFactory("Moment");
+  const moment = await Moment.deploy(
+    // baseURI
+    "https://996fubao.io/meta.json#",
+    // reservedAmount
+    555,
+    // publicStartTime
+    getTimestamp("2023-07-07 14:00:00"),
+    // publicPrice
+    ethers.utils.parseEther("0.088"),
+    // allowListMerkleRoot
+    allowListMerkleTree.getRoot(),
+    // allowListStartTime
+    getTimestamp("2023-07-06 14:00:00"),
+    // allowListEndTime
+    getTimestamp("2023-07-07 13:59:59"),
+    // allowListPrice
+    0
   );
+  await moment.deployed();
+
+  // @ts-ignore
+  console.log("Deployed to:", moment.address);
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
