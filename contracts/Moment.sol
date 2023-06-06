@@ -102,6 +102,7 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
             block.timestamp <= allowListEndTime
         ) {
             allowListRemainAmount = getAllowListRemainAmount(
+                msg.sender,
                 allowListTotalAmount,
                 allowListMerkleProof
             );
@@ -131,21 +132,20 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
     }
 
     function getAllowListRemainAmount(
+        address user,
         uint256 allowListTotalAmount,
         bytes32[] calldata allowListMerkleProof
     ) public view returns (uint256) {
-        if (allowListTotalAmount <= _getAux(msg.sender)) return 0;
+        if (allowListTotalAmount <= _getAux(user)) return 0;
         require(
             MerkleProof.verify(
                 allowListMerkleProof,
                 allowListMerkleRoot,
-                keccak256(
-                    abi.encodePacked(msg.sender, ":", allowListTotalAmount)
-                )
+                keccak256(abi.encodePacked(user, ":", allowListTotalAmount))
             ),
             "verify fail"
         );
-        return allowListTotalAmount - _getAux(msg.sender);
+        return allowListTotalAmount - _getAux(user);
     }
 
     function _publicMint(uint256 amount) private {
