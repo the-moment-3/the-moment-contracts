@@ -1,6 +1,6 @@
 import { MerkleTree } from "merkletreejs";
 import keccak256 from "keccak256";
-import data from "./1";
+import data from "../allow-list-data/1";
 
 export const allowListUpperCase = Object.fromEntries(
   Object.entries(data).map(([address, amount]) => [

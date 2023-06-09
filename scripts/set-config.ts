@@ -1,12 +1,18 @@
 import { ethers } from "hardhat";
 import { getTimestamp } from "./utils/contract-time";
-import { allowListMerkleTree } from "./allow-list";
+import { getContractWithSigner } from "./utils/get-contract-with-signer";
+import { allowListMerkleTree, allowListUpperCase } from "./allow-list";
+
+console.log(
+  "allow list address mount:",
+  Object.keys(allowListUpperCase).length
+);
 
 async function main() {
-  const Moment = await ethers.getContractFactory("Moment");
-  const moment = await Moment.deploy(
-    // baseURI
-    "https://996fubao.io/meta.json#",
+  const contract = await getContractWithSigner();
+  const tx = await contract.setConfig(
+    // perAddressMaxMintAmount
+    5,
     // reservedAmount
     555,
     // publicStartTime
@@ -22,9 +28,9 @@ async function main() {
     // allowListPrice
     0
   );
-  await moment.deployed();
-  // @ts-ignore
-  console.log("Deployed to:", moment.address);
+  const receipt = await tx.wait();
+  console.log("setConfig tx:", tx);
+  console.log("setConfig receipt:", receipt);
 }
 
 main().catch((error) => {
