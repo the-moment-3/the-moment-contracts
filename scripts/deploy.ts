@@ -7,8 +7,6 @@ async function main() {
   const moment = await Moment.deploy(
     // baseURI
     "https://996fubao.io/meta.json#",
-    // reservedAmount
-    555,
     // publicStartTime
     getTimestamp("2023-07-07 14:00:00"),
     // publicPrice

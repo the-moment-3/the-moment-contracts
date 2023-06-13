@@ -13,8 +13,6 @@ async function main() {
   const tx = await contract.setConfig(
     // perAddressMaxMintAmount
     5,
-    // reservedAmount
-    555,
     // publicStartTime
     getTimestamp("2023-07-07 14:00:00"),
     // publicPrice
