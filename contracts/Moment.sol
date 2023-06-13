@@ -15,12 +15,7 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
     uint256 public constant collectionSize = 5555;
     uint256 public perAddressMaxMintAmount = 5;
 
-    // for marketing etc.
-    uint256 public reservedAmount;
-    uint256 public reservedMintedAmount;
-
     // public mint config
-    uint256 public publicMintedAmount;
     uint256 public publicStartTime;
     uint256 public publicPrice;
 
@@ -33,7 +28,6 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
 
     constructor(
         string memory baseURI_,
-        uint256 reservedAmount_,
         uint256 publicStartTime_,
         uint256 publicPrice_,
         bytes32 allowListMerkleRoot_,
@@ -41,13 +35,7 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
         uint256 allowListEndTime_,
         uint256 allowListPrice_
     ) ERC721A("The Moment3!", "MOMENT") {
-        require(
-            reservedAmount_ <= collectionSize &&
-                allowListStartTime_ <= allowListEndTime_,
-            "invalid"
-        );
         baseURI = baseURI_;
-        reservedAmount = reservedAmount_;
         publicStartTime = publicStartTime_;
         publicPrice = publicPrice_;
         allowListMerkleRoot = allowListMerkleRoot_;
@@ -62,7 +50,6 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
 
     function setConfig(
         uint256 perAddressMaxMintAmount_,
-        uint256 reservedAmount_,
         uint256 publicStartTime_,
         uint256 publicPrice_,
         bytes32 allowListMerkleRoot_,
@@ -70,14 +57,7 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
         uint256 allowListEndTime_,
         uint256 allowListPrice_
     ) public onlyOwner {
-        require(
-            reservedAmount_ <= reservedAmount &&
-                reservedAmount_ >= reservedMintedAmount &&
-                allowListStartTime_ <= allowListEndTime_,
-            "invalid"
-        );
         perAddressMaxMintAmount = perAddressMaxMintAmount_;
-        reservedAmount = reservedAmount_;
         publicStartTime = publicStartTime_;
         publicPrice = publicPrice_;
         allowListMerkleRoot = allowListMerkleRoot_;
@@ -92,8 +72,8 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
         bytes32[] calldata allowListMerkleProof
     ) public payable callerIsUser nonReentrant {
         require(
-            publicMintedAmount + amount <= collectionSize - reservedAmount &&
-                _numberMinted(msg.sender) + amount <= perAddressMaxMintAmount,
+            totalMinted() + amount <= collectionSize &&
+                numberMinted(msg.sender) + amount <= perAddressMaxMintAmount,
             "not enough amount"
         );
         uint256 allowListRemainAmount = 0;
@@ -149,23 +129,17 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
     }
 
     function _publicMint(uint256 amount) private {
-        publicMintedAmount += amount;
         _safeMint(msg.sender, amount);
     }
 
     function _allowListMint(uint256 amount) private {
-        publicMintedAmount += amount;
         allowListMintedAmount += amount;
         _setAux(msg.sender, _getAux(msg.sender) + uint64(amount));
         _safeMint(msg.sender, amount);
     }
 
     function airdrop(address user, uint256 amount) public onlyOwner {
-        require(
-            reservedMintedAmount + amount <= reservedAmount,
-            "not enough amount"
-        );
-        reservedMintedAmount += amount;
+        require(totalMinted() + amount <= collectionSize, "not enough amount");
         _safeMint(user, amount);
     }
 
