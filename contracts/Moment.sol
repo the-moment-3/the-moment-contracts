@@ -1,113 +1,59 @@
 // SPDX-License-Identifier: MIT
+// Author: CryptoBear
 
 pragma solidity ^0.8.8;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
-contract Moment is ERC721A, Ownable, ReentrancyGuard {
-    // metadata
-    string public baseURI;
-
-    // collection info
+contract Moment is ERC721A, Ownable {
     uint256 public constant collectionSize = 5555;
-    uint256 public perAddressMaxMintAmount = 5;
-
-    // public mint config
-    uint256 public publicStartTime;
-    uint256 public publicPrice;
-
-    // allow list mint config
+    uint256 public perAddressMaxMintAmount = 1;
     bytes32 public allowListMerkleRoot;
-    uint256 public allowListMintedAmount;
     uint256 public allowListStartTime;
     uint256 public allowListEndTime;
-    uint256 public allowListPrice;
+    uint256 public publicStartTime;
+    string public baseURI;
 
     constructor(
-        string memory baseURI_,
-        uint256 publicStartTime_,
-        uint256 publicPrice_,
         bytes32 allowListMerkleRoot_,
         uint256 allowListStartTime_,
         uint256 allowListEndTime_,
-        uint256 allowListPrice_
+        uint256 publicStartTime_,
+        string memory baseURI_
     ) ERC721A("The Moment3!", "MOMENT") {
-        baseURI = baseURI_;
-        publicStartTime = publicStartTime_;
-        publicPrice = publicPrice_;
         allowListMerkleRoot = allowListMerkleRoot_;
         allowListStartTime = allowListStartTime_;
         allowListEndTime = allowListEndTime_;
-        allowListPrice = allowListPrice_;
-    }
-
-    function setBaseURI(string calldata baseURI_) public onlyOwner {
-        baseURI = baseURI_;
-    }
-
-    function setConfig(
-        uint256 perAddressMaxMintAmount_,
-        uint256 publicStartTime_,
-        uint256 publicPrice_,
-        bytes32 allowListMerkleRoot_,
-        uint256 allowListStartTime_,
-        uint256 allowListEndTime_,
-        uint256 allowListPrice_
-    ) public onlyOwner {
-        perAddressMaxMintAmount = perAddressMaxMintAmount_;
         publicStartTime = publicStartTime_;
-        publicPrice = publicPrice_;
-        allowListMerkleRoot = allowListMerkleRoot_;
-        allowListStartTime = allowListStartTime_;
-        allowListEndTime = allowListEndTime_;
-        allowListPrice = allowListPrice_;
+        baseURI = baseURI_;
     }
 
     function mint(
         uint256 amount,
         uint256 allowListTotalAmount,
         bytes32[] calldata allowListMerkleProof
-    ) public payable callerIsUser nonReentrant {
-        require(
-            totalMinted() + amount <= collectionSize &&
-                numberMinted(msg.sender) + amount <= perAddressMaxMintAmount,
-            "not enough amount"
-        );
-        uint256 allowListRemainAmount = 0;
+    ) public callerIsUser {
+        require(amount > 0 && totalMinted() + amount <= collectionSize);
         if (
             block.timestamp >= allowListStartTime &&
             block.timestamp <= allowListEndTime
         ) {
-            allowListRemainAmount = getAllowListRemainAmount(
+            uint256 allowListRemainAmount = getAllowListRemainAmount(
                 msg.sender,
                 allowListTotalAmount,
                 allowListMerkleProof
             );
-        }
-        if (allowListRemainAmount == 0) {
-            require(
-                block.timestamp >= publicStartTime,
-                "public mint not started"
-            );
-            _publicMint(amount);
-            _refundIfOver(amount * publicPrice);
+            require(amount == allowListRemainAmount);
+            _safeMint(msg.sender, amount);
+            _setAux(msg.sender, _getAux(msg.sender) + uint64(amount));
         } else {
-            require(amount >= allowListRemainAmount, "must be used up at once");
-            if (amount == allowListRemainAmount) {
-                _allowListMint(amount);
-                _refundIfOver(amount * allowListPrice);
-            } else {
-                uint256 publicAmount = amount - allowListRemainAmount;
-                uint256 publicTotalPrice = publicAmount * publicPrice;
-                uint256 allowListTotalPrice = allowListRemainAmount *
-                    allowListPrice;
-                _publicMint(publicAmount);
-                _allowListMint(allowListRemainAmount);
-                _refundIfOver(publicTotalPrice + allowListTotalPrice);
-            }
+            require(block.timestamp >= publicStartTime);
+            require(
+                numberMinted(msg.sender) + amount <= perAddressMaxMintAmount
+            );
+            _safeMint(msg.sender, amount);
         }
     }
 
@@ -122,24 +68,13 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
                 allowListMerkleProof,
                 allowListMerkleRoot,
                 keccak256(abi.encodePacked(user, ":", allowListTotalAmount))
-            ),
-            "verify fail"
+            )
         );
         return allowListTotalAmount - _getAux(user);
     }
 
-    function _publicMint(uint256 amount) private {
-        _safeMint(msg.sender, amount);
-    }
-
-    function _allowListMint(uint256 amount) private {
-        allowListMintedAmount += amount;
-        _setAux(msg.sender, _getAux(msg.sender) + uint64(amount));
-        _safeMint(msg.sender, amount);
-    }
-
     function airdrop(address user, uint256 amount) public onlyOwner {
-        require(totalMinted() + amount <= collectionSize, "not enough amount");
+        require(totalMinted() + amount <= collectionSize);
         _safeMint(user, amount);
     }
 
@@ -147,34 +82,31 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
         address[] calldata userList,
         uint256[] calldata amountList
     ) public onlyOwner {
-        require(userList.length == amountList.length, "invalid");
+        require(userList.length == amountList.length);
         for (uint256 i = 0; i < userList.length; i++) {
             airdrop(userList[i], amountList[i]);
         }
     }
 
-    // probably nothing
-
-    bool public burnable = false;
-
-    function setBurnable(bool burnable_) public onlyOwner {
-        burnable = burnable_;
+    function setConfig(
+        uint256 perAddressMaxMintAmount_,
+        bytes32 allowListMerkleRoot_,
+        uint256 allowListStartTime_,
+        uint256 allowListEndTime_,
+        uint256 publicStartTime_,
+        string calldata baseURI_
+    ) public onlyOwner {
+        perAddressMaxMintAmount = perAddressMaxMintAmount_;
+        allowListMerkleRoot = allowListMerkleRoot_;
+        allowListStartTime = allowListStartTime_;
+        allowListEndTime = allowListEndTime_;
+        publicStartTime = publicStartTime_;
+        baseURI = baseURI_;
     }
 
-    function burn(uint256[] calldata tokenIds) public callerIsUser {
-        require(burnable, "not burnable");
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 tokenId = tokenIds[i];
-            require(msg.sender == ownerOf(tokenId), "not owner");
-            _burn(tokenId);
-        }
-    }
-
-    // other
-
-    modifier callerIsUser() {
-        require(tx.origin == msg.sender, "not user");
-        _;
+    function withdraw() public onlyOwner {
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        require(success);
     }
 
     function totalMinted() public view returns (uint256) {
@@ -185,27 +117,16 @@ contract Moment is ERC721A, Ownable, ReentrancyGuard {
         return _numberMinted(user);
     }
 
-    function numberBurned(address user) public view returns (uint256) {
-        return _numberBurned(user);
-    }
-
-    function withdraw() public onlyOwner nonReentrant {
-        (bool success, ) = msg.sender.call{value: address(this).balance}("");
-        require(success, "fail");
-    }
-
-    function _refundIfOver(uint256 price) private {
-        require(msg.value >= price, "not enough ETH");
-        if (msg.value > price) {
-            payable(msg.sender).transfer(msg.value - price);
-        }
-    }
-
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
     }
 
     function _startTokenId() internal pure override returns (uint256) {
         return 1;
+    }
+
+    modifier callerIsUser() {
+        require(tx.origin == msg.sender);
+        _;
     }
 }

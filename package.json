@@ -1,6 +1,8 @@
 {
-  "name": "hardhat-project",
+  "private": true,
+  "name": "the-moment-contracts",
   "scripts": {
+    "build": "npx hardhat compile",
     "clean": "rm -rf node_modules cache artifacts typechain-types"
   },
   "devDependencies": {
