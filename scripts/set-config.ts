@@ -6,7 +6,7 @@ async function main() {
   const contract = await getContractWithSigner();
   const tx = await contract.setConfig(
     // perAddressMaxMintAmount
-    5,
+    1,
     // allowListMerkleRoot
     allowListMerkleTree.getRoot(),
     // allowListStartTime

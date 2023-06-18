@@ -11,6 +11,9 @@ devDependencies:
   '@openzeppelin/contracts':
     specifier: ^4.9.0
     version: 4.9.0
+  alphabetjs:
+    specifier: ^0.1.4
+    version: 0.1.4
   dotenv:
     specifier: ^16.1.4
     version: 16.1.4
@@ -1130,6 +1133,10 @@ packages:
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
       uri-js: 4.4.1
+    dev: true
+
+  /alphabetjs@0.1.4:
+    resolution: {integrity: sha512-WK8EX3zTu15WX1GEJZ8hmO1JKI0PuZs+Xyg5XlqNVKwy2eKP+TWgIh+lKc+rXOdvaGIdWJYbR1TPeBFLElItTw==}
     dev: true
 
   /amdefine@1.0.1:

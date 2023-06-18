@@ -1,11 +1,23 @@
 // SPDX-License-Identifier: MIT
-// Author: CryptoBear
 
 pragma solidity ^0.8.8;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+
+/**
+ *
+ *  |ˉˉˉˉˉˉˉˉˉˉˉ| /ˉˉˉˉˉˉˉˉ\ |ˉˉˉˉˉˉˉˉˉˉˉ||ˉˉˉˉˉˉˉˉˉˉ||ˉˉˉ\    |ˉ||ˉˉˉˉˉˉˉˉˉˉˉ||ˉˉˉˉˉˉˉˉˉˉ\
+ *  | |ˉˉ| |ˉˉ| |/ /ˉˉˉˉˉˉ\ \| |ˉˉ| |ˉˉ| || |ˉˉˉˉˉˉˉˉ | |\ \   | | ˉˉˉˉ| |ˉˉˉˉ  ˉˉˉˉˉˉˉˉ| |
+ *  | |  | |  | || |      | || |  | |  | ||  ˉˉˉˉˉˉˉˉ|| | \ \  | |     | |     |ˉˉˉˉˉˉˉˉ  /
+ *  | |  | |  | || |      | || |  | |  | || |ˉˉˉˉˉˉˉˉ | |  \ \ | |     | |      ˉˉˉˉˉˉˉˉ| \
+ *  | |  | |  | |\ \      / /| |  | |  | || |         | |   \ \| |     | |              / |
+ *  | |  | |  | | \ ˉˉˉˉˉˉ / | |  | |  | ||  ˉˉˉˉˉˉˉˉ|| |    \ ˉ |     | |     |ˉˉˉˉˉˉˉˉ  /
+ *  ˉˉˉ  ˉˉˉ  ˉˉˉ  ˉˉˉˉˉˉˉˉ  ˉˉˉ  ˉˉˉ  ˉˉˉ ˉˉˉˉˉˉˉˉˉˉ  ˉ      ˉˉˉ      ˉˉˉ      ˉˉˉˉˉˉˉˉˉˉ
+ *  Every Moment is Non-Fungible.
+ *
+ */
 
 contract Moment is ERC721A, Ownable {
     uint256 public constant collectionSize = 5555;
