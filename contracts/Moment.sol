@@ -57,16 +57,15 @@ contract Moment is ERC721A, Ownable {
                 allowListTotalAmount,
                 allowListMerkleProof
             );
-            require(amount == allowListRemainAmount);
-            _safeMint(msg.sender, amount);
+            require(allowListRemainAmount == amount);
             _setAux(msg.sender, _getAux(msg.sender) + uint64(amount));
         } else {
             require(block.timestamp >= publicStartTime);
             require(
                 numberMinted(msg.sender) + amount <= perAddressMaxMintAmount
             );
-            _safeMint(msg.sender, amount);
         }
+        _safeMint(msg.sender, amount);
     }
 
     function getAllowListRemainAmount(
