@@ -46,7 +46,7 @@ contract Moment is ERC721A, Ownable {
         uint256 amount,
         uint256 allowListTotalAmount,
         bytes32[] calldata allowListMerkleProof
-    ) public callerIsUser {
+    ) public payable callerIsUser {
         require(amount > 0 && totalMinted() + amount <= collectionSize);
         if (
             block.timestamp >= allowListStartTime &&
@@ -85,7 +85,7 @@ contract Moment is ERC721A, Ownable {
     }
 
     function airdrop(address user, uint256 amount) public onlyOwner {
-        require(totalMinted() + amount <= collectionSize);
+        require(amount > 0 && totalMinted() + amount <= collectionSize);
         _safeMint(user, amount);
     }
 
