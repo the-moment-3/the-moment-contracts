@@ -6,7 +6,7 @@ import data from "../allow-list-data/1";
 console.log(
   "\n[allow-list] address:",
   Object.keys(data).length,
-  "\n[allow-list] total amount:",
+  "\n[allow-list] amount:",
   Object.entries(data).reduce((sum, [, amount]) => sum + amount, 0),
   "\n"
 );
