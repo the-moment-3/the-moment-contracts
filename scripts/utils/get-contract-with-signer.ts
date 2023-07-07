@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { contractAddress } from "../constants";
 import { abi } from "../../artifacts/contracts/Moment.sol/Moment.json";
 
-console.log(`\ncotract address: ${contractAddress}\n`);
+console.log(`\ncontract address: ${contractAddress}\n`);
 
 export async function getContractWithSigner() {
   // @ts-ignore
