@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { getContractWithSigner } from "./utils/get-contract-with-signer";
-import data from "./_data/airdrop/pcy-300";
+import data from "./_data/airdrop/xxx";
 
 const userList = Object.keys(data);
 const amountList = Object.values(data);
