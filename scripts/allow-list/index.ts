@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import { MerkleTree } from "merkletreejs";
 import keccak256 from "keccak256";
-import data from "../_data/allow-list/1";
+import data from "../_data/allow-list/2";
 
 console.log(
   "\n[allow-list] address:",

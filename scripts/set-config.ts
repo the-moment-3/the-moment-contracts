@@ -12,9 +12,9 @@ async function main() {
     // allowListStartTime
     getTimestamp("2023-07-13 14:00:00"),
     // allowListEndTime
-    getTimestamp("2023-07-14 13:59:59"),
+    getTimestamp("2023-07-15 13:59:59"),
     // publicStartTime
-    getTimestamp("2023-07-14 14:00:00"),
+    getTimestamp("2023-07-15 14:00:00"),
     // baseURI
     "https://themoment3.ai/meta.json#"
   );
