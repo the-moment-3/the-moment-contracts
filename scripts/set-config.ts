@@ -16,7 +16,7 @@ async function main() {
     // publicStartTime
     getTimestamp("2023-07-15 20:00:00"),
     // baseURI
-    "https://themoment3.ai/meta.json#"
+    "https://themoment3.infura-ipfs.io/ipfs/QmX3F31GxwVH2kctaXUReU9n9sJBwmS5JiUBvvCHCCFVQQ/meta/"
   );
   const receipt = await tx.wait();
   console.log("setConfig tx:", tx);
